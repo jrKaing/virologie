@@ -61,12 +61,11 @@ def main(argv):
     url = 'http://localhost:8888/key.txt'
     resp = requests.get(url)
     key=resp.text
-
-    #pour voir si la key est bien dans la variable, A SUPPRIMER#
-    print(key)
+    key=key.rstrip("\n")
+    key= key.encode('utf-8')
 
     # a changer en /tmp
-    baseUrl = './copie'
+    baseUrl = '../copie'
 
     is_decrypt = None
 
