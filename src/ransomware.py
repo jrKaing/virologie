@@ -61,7 +61,7 @@ def main(argv):
 
     if len(argv) > 1:
         is_decrypt = True
-        key = argv[1]
+        key = bytes(argv[1], 'utf-8')
 
 
     for root, dirs, files in os.walk(baseUrl, topdown=False):
