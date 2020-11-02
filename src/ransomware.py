@@ -92,6 +92,13 @@ def main(argv):
                     encryptFile(key, file)
                     os.remove(file)
 
+    '''supprime de la variable et donc la référence à la zone mémoire ou est stocké la valeur de la key, il n'y plus de référence à cette valeur.
+    Python via l'algo garbage collection détruit cette zone mémoire pour la réalouer à un nouvelle objet.
+    La garbage collection a deux façon de fonctionner: comptage de références et générationnel. 
+    - Si le nombre de références d'un objet atteint 0, l'algorithme de comptage de références nettoit la zone mémoire de l'objet.
+    - Si il y a un cycle, l'algorithme de références est inefficace, c'est l'algorithme générationnel qui nettoie la zone mémoire
+    '''
+    del key
 
 if __name__ == '__main__':
     main(sys.argv)
