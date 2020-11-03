@@ -39,7 +39,7 @@ def encryptFile(key, filename, chunksize=24*1024):
 
             '''
             si la taille du chunk vaut 0 c'est qu'on est arrivé à la fin du fichier, 
-            dans le cas où la taille du dernier chunk n'est pas divisible par 16 (taille de l'iv) on rajoute la différence avec des espaces.
+            dans le cas où la taille du dernier chunk n'est pas divisible par 16 on rajoute la différence avec des espaces.
             on écrit ensuite le chunk chiffré dans le fichier.
             '''    
             while True:
