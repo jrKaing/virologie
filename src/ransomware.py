@@ -10,7 +10,7 @@ import subprocess
 def encryptFile(key, filename, out_filename=None, chunksize=64*1024):
     '''
     Chiffre un fichier en utilisant l'algorithme AES-256
-    key : clé utilisé pour le chiffrement
+    key : clé utilisé pour le chiffrement de taille 32 bits
     filename : le fichier qu'on souhaite chiffrer
     out_filename : le fichier chiffré
     chunksize : taille de bloc que la fonction va lire, ici on prend des morceaux de 64 octets,
