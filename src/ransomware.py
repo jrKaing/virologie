@@ -21,6 +21,7 @@ def encryptFile(key, filename, chunksize=24*1024):
     #On récupère la taille du fichier orignal
     filesize = os.path.getsize(filename)
 
+    #on ouvre le fichier original en lecture et le fichier out en écriture
     with open(filename, 'rb') as infile:
         with open(out_filename, 'wb') as outfile:
 
@@ -93,6 +94,7 @@ def main(argv):
     # Le dossier à chiffrer
     directory = '/tmp'
 
+    # initialisation
     is_decrypt = None
 
     # récupère la clé en argument si il y en a un
@@ -115,6 +117,7 @@ def main(argv):
 
             # déchiffrement
             if is_decrypt:
+                # vérfication de l'extension
                 if file[-4:] == ".enc":
                     decryptFile(key, file)
 
@@ -123,9 +126,10 @@ def main(argv):
 
             # chiffrement
             else:
+                # vérfication de l'extension
                 if file[-4:] != ".enc":
                     encryptFile(key, file)
-                    
+
                     #utilisation de commande bash shred pour supprimer de manière sécurisé les fichiers d'origine
                     subprocess.check_output(["shred", "-uz", file])
 
