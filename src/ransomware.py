@@ -8,7 +8,6 @@ import sys
 import subprocess
 
 def encryptFile(key, filename, chunksize=24*1024):
-
     '''
     Chiffre un fichier en utilisant l'algorithme AES-256
     key : clé utilisé pour le chiffrement de taille 32 bits
@@ -16,7 +15,6 @@ def encryptFile(key, filename, chunksize=24*1024):
     chunksize : taille de bloc que la fonction va lire, ici on prend des morceaux de 24 octets,
     ce système permet de chiffrer des fichiers volumineux sans saturer la RAM. 
     '''
-
     #On créer le fichier de sortie chiffré
     out_filename = filename + '.enc'
 
@@ -25,14 +23,19 @@ def encryptFile(key, filename, chunksize=24*1024):
 
     with open(filename, 'rb') as infile:
         with open(out_filename, 'wb') as outfile:
+
             #On génère un vecteur d'initialisation de 16 octets
             iv = Random.new().read(AES.block_size)
+
             #On setup la fonction de chiffement avec la clé, le mode et le vecteur d'initialisation
             encryptor = AES.new(key, AES.MODE_CBC, iv)
+
             #on écrit sur les 8 premiers octets du fichier chiffré la taille du fichier original (en little endian) (nécessaire pour déchiffrer)
             outfile.write(struct.pack('<Q', filesize))
+
             #on écrit l'iv de chiffrement ensuite sur les 16 octets d'après (nécessaire pour le déchiffrement)
             outfile.write(iv)
+
             '''
             si la taille du chunk vaut 0 c'est qu'on est arrivé à la fin du fichier, 
             dans le cas où le dernier la taille du dernier chunk n'est pas divisible par 16 (taille de l'iv) on rajoute la différence avec des espaces.
@@ -44,6 +47,7 @@ def encryptFile(key, filename, chunksize=24*1024):
                     break
                 elif len(chunk) % 16 != 0:
                     chunk += b' ' * (16 - len(chunk)%16)
+
                 outfile.write(encryptor.encrypt(chunk))
 
 
@@ -54,15 +58,21 @@ def decryptFile(key, filename, chunksize=24*1024):
     filename : le fichier qu'on souhaite déchiffrer
     chunksize : taille de bloc que la fonction va lire, ici 24 octets
     '''
+    #on créer le fichier original
     out_filename = filename[:-4]
+
     #on ouvre en lecture le fichier chiffré
     with open(filename, 'rb') as infile:
+
         #on récupère la taille du fichier originale
         origsize = struct.unpack('<Q', infile.read(struct.calcsize('Q')))[0]
+
         #on récupère l'iv
         iv = infile.read(16)
+
         #on setup la fonction de déchiffrement
         decryptor = AES.new(key, AES.MODE_CBC, iv)
+
         '''
         on ouvre le fichier de sortie en écriture, si la taille du chunk vaut 0 c'est qu'on a fini. 
         On écrit le chunk déchiffré sur le fichier.
@@ -107,14 +117,15 @@ def main(argv):
             if is_decrypt:
                 if file[-4:] == ".enc":
                     decryptFile(key, file)
+
 	                #utilisation de commande bash shred pour supprimer de manière sécurisé les fichiers .enc
                     subprocess.check_output(["shred", "-uz", file])
 
             # chiffrement
             else:
                 if file[-4:] != ".enc":
-                    #chiffrement
                     encryptFile(key, file)
+                    
                     #utilisation de commande bash shred pour supprimer de manière sécurisé les fichiers d'origine
                     subprocess.check_output(["shred", "-uz", file])
 
