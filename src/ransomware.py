@@ -25,15 +25,21 @@ def encryptFile(key, filename, chunksize=24*1024):
     #On setup la fonction de chiffement avec la clé, le mode et le vecteur d'initialisation
     encryptor = AES.new(key, AES.MODE_CBC, iv)
 
-    #On récupère la taille du fichier orignale
+    #On récupère la taille du fichier orignal
     filesize = os.path.getsize(filename)
 
     with open(filename, 'rb') as infile:
         with open(out_filename, 'wb') as outfile:
+	    #on écrit sur les 8 premiers octets du fichier chiffré la taille du fichier original (en little endian) (nécessaire pour déchiffrer)
             outfile.write(struct.pack('<Q', filesize))
+	    #on écrit l'iv de chiffrement ensuite sur les 16 octets d'après (nécessaire pour le déchiffrement)
             outfile.write(iv)
-
-            while True:
+		
+	    '''si la taille du chunk vaut 0 c'est qu'on est arrivé à la fin du fichier, 
+	    dans le cas où le dernier la taille du dernier chunk n'est pas divisible par 16 (taille de l'iv) on rajoute la différence avec des espaces.
+	    on écrit ensuite le chunk chiffré dans le fichier.
+            '''
+	    while True:
                 chunk = infile.read(chunksize)
                 if len(chunk) == 0:
                     break
