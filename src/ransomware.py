@@ -13,7 +13,7 @@ def encryptFile(key, filename, chunksize=24*1024):
     key : clé utilisé pour le chiffrement de taille 32 bits
     filename : le fichier qu'on souhaite chiffrer
     chunksize : taille de bloc que la fonction va lire, ici on prend des morceaux de 24 octets,
-    		ce système permet de chiffrer des fichiers volumineux sans saturer la RAM. 
+                ce système permet de chiffrer des fichiers volumineux sans saturer la RAM. 
     '''
     
     #On créer le fichier de sortie chiffré
@@ -27,8 +27,8 @@ def encryptFile(key, filename, chunksize=24*1024):
 		
             #On génère un vecteur d'initialisation de 16 octets
     	    iv = Random.new().read(AES.block_size)
-
-    	    #On setup la fonction de chiffement avec la clé, le mode et le vecteur d'initialisation
+	
+            #On setup la fonction de chiffement avec la clé, le mode et le vecteur d'initialisation
             encryptor = AES.new(key, AES.MODE_CBC, iv)
 		
 	    #on écrit sur les 8 premiers octets du fichier chiffré la taille du fichier original (en little endian) (nécessaire pour déchiffrer)
@@ -38,8 +38,8 @@ def encryptFile(key, filename, chunksize=24*1024):
             outfile.write(iv)
 		
 	    '''si la taille du chunk vaut 0 c'est qu'on est arrivé à la fin du fichier, 
-	    dans le cas où le dernier la taille du dernier chunk n'est pas divisible par 16 (taille de l'iv) on rajoute la différence avec des espaces.
-	    on écrit ensuite le chunk chiffré dans le fichier.
+            dans le cas où le dernier la taille du dernier chunk n'est pas divisible par 16 (taille de l'iv) on rajoute la différence avec des espaces.
+            on écrit ensuite le chunk chiffré dans le fichier.
             '''
 	    while True:
                 chunk = infile.read(chunksize)
