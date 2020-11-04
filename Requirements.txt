@@ -1,6 +1,6 @@
 Python3 version 3.8.6
 
-Aucune librairie externe, tout les modules utilisés font partie de la bibliothèque standard Python3 installée sur les distributions Kali linux.
+Aucune librairie externe, tout les modules utilisés font partie de la bibliothèque Python3 installée sur les distributions Kali linux.
 
 
 
