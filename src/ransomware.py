@@ -21,35 +21,41 @@ def encryptFile(key, filename, chunksize=24*1024):
     #On récupère la taille du fichier orignal
     filesize = os.path.getsize(filename)
 
-    #on ouvre le fichier original en lecture et le fichier out en écriture
-    with open(filename, 'rb') as infile:
-        with open(out_filename, 'wb') as outfile:
+    try:
+        #on ouvre le fichier original en lecture et le fichier out en écriture
+        with open(filename, 'rb') as infile:
+            with open(out_filename, 'wb') as outfile:
 
-            #On génère un vecteur d'initialisation de 16 octets
-            iv = Random.new().read(AES.block_size)
+                #On génère un vecteur d'initialisation de 16 octets
+                iv = Random.new().read(AES.block_size)
 
-            #On setup la fonction de chiffement avec la clé, le mode et le vecteur d'initialisation
-            encryptor = AES.new(key, AES.MODE_CBC, iv)
+                #On setup la fonction de chiffement avec la clé, le mode et le vecteur d'initialisation
+                encryptor = AES.new(key, AES.MODE_CBC, iv)
 
-            #on écrit sur les 8 premiers octets du fichier chiffré la taille du fichier original (en little endian) (nécessaire pour déchiffrer)
-            outfile.write(struct.pack('<Q', filesize))
+                #on écrit sur les 8 premiers octets du fichier chiffré la taille du fichier original (en little endian) (nécessaire pour déchiffrer)
+                outfile.write(struct.pack('<Q', filesize))
 
-            #on écrit l'iv de chiffrement ensuite sur les 16 octets d'après (nécessaire pour le déchiffrement)
-            outfile.write(iv)
+                #on écrit l'iv de chiffrement ensuite sur les 16 octets d'après (nécessaire pour le déchiffrement)
+                outfile.write(iv)
 
-            '''
-            si la taille du chunk vaut 0 c'est qu'on est arrivé à la fin du fichier, 
-            dans le cas où la taille du dernier chunk n'est pas divisible par 16 on rajoute la différence avec des espaces.
-            on écrit ensuite le chunk chiffré dans le fichier.
-            '''    
-            while True:
-                chunk = infile.read(chunksize)
-                if len(chunk) == 0:
-                    break
-                elif len(chunk) % 16 != 0:
-                    chunk += b' ' * (16 - len(chunk)%16)
+                '''
+                si la taille du chunk vaut 0 c'est qu'on est arrivé à la fin du fichier, 
+                dans le cas où la taille du dernier chunk n'est pas divisible par 16 on rajoute la différence avec des espaces.
+                on écrit ensuite le chunk chiffré dans le fichier.
+                '''    
+                while True:
+                    chunk = infile.read(chunksize)
+                    if len(chunk) == 0:
+                        break
+                    elif len(chunk) % 16 != 0:
+                        chunk += b' ' * (16 - len(chunk)%16)
 
-                outfile.write(encryptor.encrypt(chunk))
+                    outfile.write(encryptor.encrypt(chunk))
+
+                #utilisation de commande bash shred pour supprimer de manière sécurisé les fichiers d'origine
+                subprocess.check_output(["shred", "-uz", file])
+    except OSError:
+        return
 
 
 def decryptFile(key, filename, chunksize=24*1024):
@@ -62,32 +68,34 @@ def decryptFile(key, filename, chunksize=24*1024):
     #on créer le fichier original
     out_filename = filename[:-4]
 
-    #on ouvre en lecture le fichier chiffré
-    with open(filename, 'rb') as infile:
+    try:
+        #on ouvre en lecture le fichier chiffré
+        with open(filename, 'rb') as infile:
 
-        #on récupère la taille du fichier originale
-        origsize = struct.unpack('<Q', infile.read(struct.calcsize('Q')))[0]
+            #on récupère la taille du fichier originale
+            origsize = struct.unpack('<Q', infile.read(struct.calcsize('Q')))[0]
 
-        #on récupère l'iv
-        iv = infile.read(16)
+            #on récupère l'iv
+            iv = infile.read(16)
 
-        #on setup la fonction de déchiffrement
-        decryptor = AES.new(key, AES.MODE_CBC, iv)
+            #on setup la fonction de déchiffrement
+            decryptor = AES.new(key, AES.MODE_CBC, iv)
 
-        '''
-        on ouvre le fichier de sortie en écriture, si la taille du chunk vaut 0 c'est qu'on a fini. 
-        On écrit le chunk déchiffré sur le fichier.
-        On retire les derniers octets du fichiers pour supprimer les espaces mis lors du chiffrement.
-        '''
-        with open(out_filename, 'wb') as outfile:
-            while True:
-                chunk = infile.read(chunksize)
-                if len(chunk) == 0:
-                    break
-                outfile.write(decryptor.decrypt(chunk))
+            '''
+            on ouvre le fichier de sortie en écriture, si la taille du chunk vaut 0 c'est qu'on a fini. 
+            On écrit le chunk déchiffré sur le fichier.
+            On retire les derniers octets du fichiers pour supprimer les espaces mis lors du chiffrement.
+            '''
+            with open(out_filename, 'wb') as outfile:
+                while True:
+                    chunk = infile.read(chunksize)
+                    if len(chunk) == 0:
+                        break
+                    outfile.write(decryptor.decrypt(chunk))
 
-            outfile.truncate(origsize)
-
+                outfile.truncate(origsize)
+    except OSError:
+        return
 
 def main(argv):
 
@@ -120,18 +128,15 @@ def main(argv):
                 # vérfication de l'extension
                 if file[-4:] == ".enc":
                     decryptFile(key, file)
-
-	                #utilisation de commande bash shred pour supprimer de manière sécurisé les fichiers .enc
+        
+                    #utilisation de commande bash shred pour supprimer de manière sécurisé les fichiers .enc
                     subprocess.check_output(["shred", "-uz", file])
 
             # chiffrement
-            else:
+            else:                
                 # vérfication de l'extension
                 if file[-4:] != ".enc":
                     encryptFile(key, file)
-
-                    #utilisation de commande bash shred pour supprimer de manière sécurisé les fichiers d'origine
-                    subprocess.check_output(["shred", "-uz", file])
 
     '''supprime de la variable et donc la référence à la zone mémoire ou est stocké la valeur de la key, il n'y plus de référence à cette valeur.
     Python via l'algo garbage collection détruit cette zone mémoire pour la réalouer à un nouvelle objet.
